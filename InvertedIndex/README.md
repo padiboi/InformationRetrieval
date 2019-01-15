@@ -23,3 +23,7 @@ The goal here would be to create mapping rules such that synonyms are also under
 To reduce each term to a base word, we use Porter's algorithm. We used [Stanford's NLP repo](https://raw.githubusercontent.com/stanfordnlp/CoreNLP/master/src/edu/stanford/nlp/process/Stemmer.java) as a starting point for our implementation.
 
 ## Boolean retrieval model 
+
+## Accepted language
+
+Our accepted language consists of 3 boolean operators - the binary operators AND(&), OR(|), and the unary operator NOT(!).

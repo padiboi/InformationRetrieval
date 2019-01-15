@@ -56,11 +56,7 @@ public class InvertedIndex {
                 if (term == null) {
                     continue;
                 }
-                if (dictionary.containsKey(term)) {
-                    docList = dictionary.get(term);
-                } else {
-                    docList = new ArrayList<Integer>();
-                }
+                docList = dictionary.getOrDefault(term, new ArrayList<Integer>());
                 docList.add(i);
                 dictionary.put(term, docList);
             }
