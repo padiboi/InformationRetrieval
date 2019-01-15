@@ -9,7 +9,7 @@ public class QueryInterface {
 		System.out.println("Enter query: ");
 		BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
 		String query = br.readLine();
-		query = query.replace(" ", "");
-		QueryHandler.convertInfixToPostfix(query);
+		query = query.trim();
+		QueryHandler.scheduleOperations(query);
 	}
 }
