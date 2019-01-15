@@ -7,11 +7,14 @@ import java.util.HashMap;
 import java.util.Set;
 import java.util.HashSet;
 import java.io.File;
+import java.util.Arrays;
 
 public class QueryHandler {
+
+	private HashMap<ArrayList<Integer>, ArrayList<Integer>> cache = new HashMap<>(); 
 	
 	public static void scheduleOperations(String query) {
-		QueryHandler.handleBrackets(query);		
+		handleBrackets(query);		
 	}
 
 	public static String handleBrackets(String query) {
@@ -27,7 +30,55 @@ public class QueryHandler {
 			maxLevel = Math.max(maxLevel, stack.size());
 		}
 		System.out.println(maxLevel);
+		query = solveBrackets(query, maxLevel);
+		System.out.println(query);
 		return null;
+	}
+
+	public static String solveBrackets(String query, int maxLevel) {
+		if (maxLevel == 0) {
+			parseQuery(query.split(" "));
+			return query;
+		}
+		LinkedList<Character> stack = new LinkedList<>();
+		int stackLevel = 0;
+		for (int i = 0; i < query.length(); ++i) {
+			stackLevel = stack.size();
+			if (stackLevel == maxLevel) {
+				// search for next )
+				int j = i;
+				while (query.charAt(j) != ')') {
+					++j;
+				}
+				String[] args = query.substring(i, j).split(" ");
+				parseQuery(args);
+				query = solveBrackets(query, maxLevel - 1);
+			}
+			char ch = query.charAt(i);
+			if (ch == '(') {
+				stack.push(ch);
+			} else if (ch == ')') {
+				stack.pop();
+			}
+			return "";
+		}
+	}
+
+	public static void parseQuery(String[] args) {
+		ArrayList<Integer> result = new ArrayList<>();
+		if (args.length == 2) {
+			if (args[0] == '!') {
+				result = negate(args[1]);			
+			}		
+		} else if (args.length == 3) {
+			if (args[1] == '&') {
+				result = intersect(args[0], args[2]);
+			} else {
+				result = union(args[0], args[2]);
+			}
+		}
+		System.out.println(result);
+		cache.put(Arrays.asList(args), result);
 	}
 
 	public static ArrayList<Integer> intersect(String term1, String term2) {
