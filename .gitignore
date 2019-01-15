@@ -1,6 +1,7 @@
 #
 # Project specific excludes
 #
+data/
 tomcat
 #
 # Default excludes
