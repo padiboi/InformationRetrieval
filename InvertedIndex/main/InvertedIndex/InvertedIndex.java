@@ -29,8 +29,15 @@ public class InvertedIndex {
         BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
         String query = br.readLine();
         query = query.trim();
-        QueryHandler.scheduleOperations(query, dictionary);
-    }              
+        StringTokenizer stringTokenizer = new StringTokenizer(query);
+        String normalizedQuery = "";
+        while (stringTokenizer.hasMoreTokens()) {
+            normalizedQuery += Normalizer.normalizeQuery(stringTokenizer.nextToken()) + " ";
+        }
+        normalizedQuery = normalizedQuery.trim();
+        System.out.println(normalizedQuery);
+        QueryHandler.scheduleOperations(normalizedQuery, dictionary);
+    }
     
     private static void constructDictionary(TreeMap dict) {
         File folder = new File("C:\\Users\\kanis\\Documents\\GitHub\\InformationRetrieval\\InvertedIndex\\preprocessing\\data");
