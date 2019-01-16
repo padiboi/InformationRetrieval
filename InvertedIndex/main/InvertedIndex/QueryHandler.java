@@ -4,119 +4,59 @@ import java.io.*;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.TreeMap;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.Arrays;
 import java.util.Collections;
 import com.google.gson.Gson;
+import com.google.gson.JsonSyntaxException;
 
 public class QueryHandler {
 
-	private static HashMap<String, ArrayList<Integer>> cache = new HashMap<>();
+	private static TreeMap<String, ArrayList<Integer>> cache = new TreeMap<>();
 	private static int nodeLevel;
 
-	public static void parseSimpleQuery(String[] args) {
-		String simpleResult = parseQuery(args);
-		System.out.println(simpleResult);
-		System.out.println(cache.get(simpleResult));
+	public static void parseSimpleQuery(String[] args, TreeMap<String, List<Integer>> map) {
+		String simpleResult = parseQuery(args, map);
+		/*System.out.println(simpleResult);
+		System.out.println(cache.get(simpleResult));*/
 	}
 
-	public static void scheduleOperations(String query) {
-		handleBrackets(query);
+	public static void scheduleOperations(String query, TreeMap<String, List<Integer>> map) {
+		// System.out.println(query);
+		String args[] = query.split(" ");
+		parseSimpleQuery(query.split(" "), map);
 	}
 
-	public static String handleBrackets(String query) {
-		int maxLevel = 0;
-		LinkedList<Character> stack = new LinkedList<>();
-		for (int i = 0; i < query.length(); ++i) {
-			char ch = query.charAt(i);
-			if (ch == '(') {
-				stack.push(ch);
-			} else if (ch == ')') {
-				stack.pop();
-			}
-			maxLevel = Math.max(maxLevel, stack.size());
-		}
-		System.out.println(maxLevel);
-		query = solveBrackets(query, maxLevel);
-		System.out.println(query);
-		return null;
-	}
-
-	public static String solveBrackets(String query, int maxLevel) {
-		if (maxLevel == 0) {
-			parseSimpleQuery(query.split(" "));
-			return query;
-		}
-		LinkedList<Character> stack = new LinkedList<>();
-		int stackLevel = 0;
-		for (int i = 0; i < query.length(); ++i) {
-			stackLevel = stack.size();
-			if (stackLevel == maxLevel) {
-				// search for next )
-				int j = i;
-				while (query.charAt(j) != ')') {
-					++j;
-				}
-				String[] args = query.substring(i, j).split(" ");
-				String result = parseQuery(args);
-				// modify string to remove bracket and allow for parsing
-				query = query.substring(0, i) + result + query.substring(j + 1);
-			}
-			char ch = query.charAt(i);
-			if (ch == '(') {
-				stack.push(ch);
-			} else if (ch == ')') {
-				stack.pop();
-			}
-		}
-		// exit loop after iteration over one nesting level
-		query = solveBrackets(query, maxLevel - 1);
-		return query;
-	}
-
-	public static String parseQuery(String[] args) {
+	public static String parseQuery(String[] args, TreeMap<String, List<Integer>> map) {
+		System.out.println("Parsing query...");
 		List<Integer> result = new ArrayList<>();
 		if (args.length == 2) {
 			if (args[0].equals("!")) {
-				result = negate(args[1]);			
+				result = negate(args[1], map);			
 			}		
 		} else if (args.length == 3) {
 			if (args[1].equals("&")) {
-				result = intersect(args[0], args[2]);
+				result = intersect(args[0], args[2], map);
 			} else {
-				result = union(args[0], args[2]);
+				result = union(args[0], args[2], map);
 			}
 		}
 		cache.put("$$" + nodeLevel++ + "$$", (ArrayList<Integer>) result);
+		System.out.println(result);
 		return "$$" + nodeLevel + "$$";
 	}
 
-	public static List<Integer> intersect(String term1, String term2) {
-		File indexFile = new File("../index.json");
-		IndexModel index = new IndexModel();
-		try {
-			BufferedReader bufferedReader = new BufferedReader(new FileReader(indexFile));
-			String line = bufferedReader.readLine();
-			String json = "";
-			while (line != null) {
-				json += line;
-				line = bufferedReader.readLine();
-			}
-			index = new Gson().fromJson(json, IndexModel.class);
-		} catch (FileNotFoundException e) {
-			e.printStackTrace();
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-		HashMap<String, List<Integer>> map = index.getMap();
+	public static List<Integer> intersect(String term1, String term2, TreeMap<String, List<Integer>> map) {
 		List<Integer> list1 = term1.startsWith("$$") ? cache.get(term1) : map.get(term1);
 		List<Integer> list2 = term2.startsWith("$$") ? cache.get(term2) : map.get(term2);
 		List<Integer> intersection = new ArrayList<Integer>();
-		int length1 = list1.size();
-		int length2 = list2.size();
+		int length1 = list1 != null ? list1.size() : 0;
+		int length2 = list2 != null ? list2.size() : 0;
 		int i = 0, j = 0;
+		System.out.println("List for " + term1 + " " + list1);
+		System.out.println("List for " + term2 + " " + list2);
 		while(i < length1 && j < length2) {
 			if (list1.get(i) == list2.get(j)) {
 				intersection.add(list1.get(i));
@@ -131,29 +71,12 @@ public class QueryHandler {
 		return intersection;
 	}
 
-	public static List<Integer> union(String term1, String term2) {
-		File indexFile = new File("../index.json");
-		IndexModel index = new IndexModel();
-		try {
-			BufferedReader bufferedReader = new BufferedReader(new FileReader(indexFile));
-			String line = bufferedReader.readLine();
-			String json = "";
-			while (line != null) {
-				json += line;
-				line = bufferedReader.readLine();
-			}
-			index = new Gson().fromJson(json, IndexModel.class);
-		} catch (FileNotFoundException e) {
-			e.printStackTrace();
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-		HashMap<String, List<Integer>> map = index.getMap();
+	public static List<Integer> union(String term1, String term2, TreeMap<String, List<Integer>> map) {
 		List<Integer> list1 = map.get(term1);
 		List<Integer> list2 = map.get(term2);
 		Set<Integer> union = new TreeSet<>();
-		int length1 = list1.size();
-		int length2 = list2.size();
+		System.out.println("List for " + term1 + " " + list1);
+		System.out.println("List for " + term2 + " " + list2);
 		for (Integer item : list1) {
 			union.add(item);
 		}
@@ -165,27 +88,10 @@ public class QueryHandler {
 		return result;
 	}
 
-	public static List<Integer> negate(String term) {
-		File indexFile = new File("../index.json");
-		IndexModel index = new IndexModel();
-		try {
-			BufferedReader bufferedReader = new BufferedReader(new FileReader(indexFile));
-			String line = bufferedReader.readLine();
-			String json = "";
-			while (line != null) {
-				json += line;
-				line = bufferedReader.readLine();
-			}
-			index = new Gson().fromJson(json, IndexModel.class);
-		} catch (FileNotFoundException e) {
-			e.printStackTrace();
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-		HashMap<String, List<Integer>> map = index.getMap();
+	public static List<Integer> negate(String term, TreeMap<String, List<Integer>> map) {
 		List<Integer> list = map.get(term);
 		// get number of files
-		File folder = new File("../../preprocessing/data/");
+		File folder = new File("C:\\Users\\kanis\\Documents\\GitHub\\InformationRetrieval\\InvertedIndex\\preprocessing\\data");
         File[] listOfFiles = folder.listFiles();
         boolean[] flags = new boolean[listOfFiles.length];
         for (Integer docId: list) {

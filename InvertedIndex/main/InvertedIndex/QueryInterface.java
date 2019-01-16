@@ -10,6 +10,6 @@ public class QueryInterface {
 		BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
 		String query = br.readLine();
 		query = query.trim();
-		QueryHandler.scheduleOperations(query);
+		// QueryHandler.scheduleOperations(query);
 	}
 }

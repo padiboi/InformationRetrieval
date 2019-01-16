@@ -5,39 +5,34 @@
  */
 package InvertedIndex;
 
+import java.io.*;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.StringTokenizer;
 import java.util.TreeMap;
-import java.io.IOException;
-import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import com.google.gson.Gson;
-import java.io.BufferedWriter;
-import java.io.FileWriter;
 
 /**
  *
  * @author gautam
  */
 public class InvertedIndex {
-    private TreeMap<String, ArrayList<Integer>> dictionary = new TreeMap<>();
-    private TreeMap<String, Integer> docs = new TreeMap<>();
-    private ArrayList<StringTokenizer> tokenArray = new ArrayList<>();
-
-    public InvertedIndex() throws IOException {
-        constructDictionary(this.dictionary);
-    }
+    private static TreeMap<String, List<Integer>> dictionary = new TreeMap<>();
+    private static TreeMap<String, Integer> docs = new TreeMap<>();
+    private static ArrayList<StringTokenizer> tokenArray = new ArrayList<>();
     
-    public static void main(String[] args) {
-        try {
-            new InvertedIndex();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+    public static void main(String[] args) throws IOException {
+        constructDictionary(dictionary);
+        System.out.println("Enter query: ");
+        BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
+        String query = br.readLine();
+        query = query.trim();
+        QueryHandler.scheduleOperations(query, dictionary);
     }              
     
-    private void constructDictionary(TreeMap dict) {
+    private static void constructDictionary(TreeMap dict) {
         File folder = new File("C:\\Users\\kanis\\Documents\\GitHub\\InformationRetrieval\\InvertedIndex\\preprocessing\\data");
         File[] listOfFiles = folder.listFiles();
 
@@ -56,15 +51,15 @@ public class InvertedIndex {
             }
         }
         ArrayList<Integer> docList;
-        for(int i = 0; i < tokenArray.size(); i++) {
+        for (int i = 0; i < tokenArray.size(); i++) {
             StringTokenizer st = tokenArray.get(i);
-            while(st.hasMoreTokens()) {
+            while (st.hasMoreTokens()) {
                 String term = st.nextToken();
                 term = Normalizer.normalize(term);
                 if (term == null) {
                     continue;
                 }
-                docList = dictionary.getOrDefault(term, new ArrayList<Integer>());
+                docList = (ArrayList<Integer>) dictionary.getOrDefault(term, new ArrayList<Integer>());
                 docList.add(i);
                 dictionary.put(term, docList);
             }
@@ -85,5 +80,6 @@ public class InvertedIndex {
         } catch (IOException e) {
             e.printStackTrace();
         }
+
     }
 }
