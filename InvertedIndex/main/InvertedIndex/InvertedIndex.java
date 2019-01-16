@@ -5,40 +5,42 @@
  */
 package InvertedIndex;
 
+import java.io.*;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.StringTokenizer;
 import java.util.TreeMap;
-import java.io.IOException;
-import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import com.google.gson.Gson;
-import java.io.BufferedWriter;
-import java.io.FileWriter;
 
 /**
  *
  * @author gautam
  */
 public class InvertedIndex {
-    private TreeMap<String, ArrayList<Integer>> dictionary = new TreeMap<>();
-    private TreeMap<String, Integer> docs = new TreeMap<>();
-    private ArrayList<StringTokenizer> tokenArray = new ArrayList<>();
-
-    public InvertedIndex() throws IOException {
-        constructDictionary(this.dictionary);
+    private static TreeMap<String, List<Integer>> dictionary = new TreeMap<>();
+    private static TreeMap<String, Integer> docs = new TreeMap<>();
+    private static ArrayList<StringTokenizer> tokenArray = new ArrayList<>();
+    
+    public static void main(String[] args) throws IOException {
+        constructDictionary(dictionary);
+        System.out.println("Enter query: ");
+        BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
+        String query = br.readLine();
+        query = query.trim();
+        StringTokenizer stringTokenizer = new StringTokenizer(query);
+        String normalizedQuery = "";
+        while (stringTokenizer.hasMoreTokens()) {
+            normalizedQuery += Normalizer.normalizeQuery(stringTokenizer.nextToken()) + " ";
+        }
+        normalizedQuery = normalizedQuery.trim();
+        System.out.println(normalizedQuery);
+        QueryHandler.scheduleOperations(normalizedQuery, dictionary);
     }
     
-    public static void main(String[] args) {
-        try {
-            new InvertedIndex();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }              
-    
-    private void constructDictionary(TreeMap dict) {
-        File folder = new File("../../preprocessing/data/");
+    private static void constructDictionary(TreeMap dict) {
+        File folder = new File("C:\\Users\\kanis\\Documents\\GitHub\\InformationRetrieval\\InvertedIndex\\preprocessing\\data");
         File[] listOfFiles = folder.listFiles();
 
         for (int i = 0; i < listOfFiles.length; ++i) {
@@ -47,39 +49,46 @@ public class InvertedIndex {
                 docs.put(file.getName(), i++);
                 // tokenize and add to dict
                 try {
-                    String content = new String(Files.readAllBytes(Paths.get("../../preprocessing/data/" + file.getName())));
+                    String content = new String(Files.readAllBytes(Paths.get("C:\\Users\\kanis\\Documents\\GitHub\\InformationRetrieval\\InvertedIndex\\preprocessing\\data\\" + file.getName())));
                     StringTokenizer st = new StringTokenizer(content);
                     tokenArray.add(st);
                 } catch (IOException e) {
-                    System.out.println("Sorry, an error occurred.");
+                    System.out.println(e.getMessage());
                 }
             }
         }
         ArrayList<Integer> docList;
-        for(int i = 0; i < tokenArray.size(); i++) {
+        for (int i = 0; i < tokenArray.size(); i++) {
             StringTokenizer st = tokenArray.get(i);
-            while(st.hasMoreTokens()) {
+            while (st.hasMoreTokens()) {
                 String term = st.nextToken();
                 term = Normalizer.normalize(term);
                 if (term == null) {
                     continue;
                 }
-                docList = dictionary.getOrDefault(term, new ArrayList<Integer>());
-                docList.add(i);
+                docList = (ArrayList<Integer>) dictionary.getOrDefault(term, new ArrayList<Integer>());
+                if (docList.size() == 0 || docList.get(docList.size() - 1) != i) {
+                    docList.add(i);
+                }
                 dictionary.put(term, docList);
             }
         }
         // TODO: MOVE BELOW OP TO PAGED MECHANISM (WHAT IF SIZE OF INDEX > RAM?)
         // index built in memory, save to .json file
         String indexJson = new Gson().toJson(dictionary).toString();
-        File indexFile = new File("../index.json");
+        String docsJson = new Gson().toJson(docs).toString();
+        File indexFile = new File("C:\\Users\\kanis\\Documents\\GitHub\\InformationRetrieval\\InvertedIndex\\index.json");
+        File docsFile = new File("C:\\Users\\kanis\\Documents\\GitHub\\InformationRetrieval\\InvertedIndex\\docs.json");
         BufferedWriter bufferedWriter = null;
         try {
             bufferedWriter = new BufferedWriter(new FileWriter(indexFile));
             bufferedWriter.write(indexJson);
+            bufferedWriter = new BufferedWriter(new FileWriter(docsFile));
+            bufferedWriter.write(docsJson);
             bufferedWriter.close();
         } catch (IOException e) {
             e.printStackTrace();
         }
+
     }
 }
