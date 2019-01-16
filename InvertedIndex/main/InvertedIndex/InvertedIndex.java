@@ -60,7 +60,9 @@ public class InvertedIndex {
                     continue;
                 }
                 docList = (ArrayList<Integer>) dictionary.getOrDefault(term, new ArrayList<Integer>());
-                docList.add(i);
+                if (docList.size() == 0 || docList.get(docList.size() - 1) != i) {
+                    docList.add(i);
+                }
                 dictionary.put(term, docList);
             }
         }
