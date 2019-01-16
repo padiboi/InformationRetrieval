@@ -13,12 +13,13 @@ import com.google.gson.Gson;
 
 public class QueryHandler {
 
-	private HashMap<ArrayList<Integer>, ArrayList<Integer>> cache = new HashMap<>();
+	private static HashMap<String, ArrayList<Integer>> cache = new HashMap<>();
+	private static int nodeLevel;
 
-	public static void parseSimpleQuery(String query) {
-		String[] args = query.split(" ");
-		List<Integer> simpleResult = parseQuery(args);
+	public static void parseSimpleQuery(String[] args) {
+		String simpleResult = parseQuery(args);
 		System.out.println(simpleResult);
+		System.out.println(cache.get(simpleResult));
 	}
 
 	public static void scheduleOperations(String query) {
@@ -44,9 +45,8 @@ public class QueryHandler {
 	}
 
 	public static String solveBrackets(String query, int maxLevel) {
-		LinkedList<List<String []>> opList = new LinkedList<>();
 		if (maxLevel == 0) {
-			parseQuery(query.split(" "));
+			parseSimpleQuery(query.split(" "));
 			return query;
 		}
 		LinkedList<Character> stack = new LinkedList<>();
@@ -60,7 +60,9 @@ public class QueryHandler {
 					++j;
 				}
 				String[] args = query.substring(i, j).split(" ");
-				parseQuery(args);
+				String result = parseQuery(args);
+				// modify string to remove bracket and allow for parsing
+				query = query.substring(0, i) + result + query.substring(j + 1);
 			}
 			char ch = query.charAt(i);
 			if (ch == '(') {
@@ -69,10 +71,12 @@ public class QueryHandler {
 				stack.pop();
 			}
 		}
-		return "";
+		// exit loop after iteration over one nesting level
+		query = solveBrackets(query, maxLevel - 1);
+		return query;
 	}
 
-	public static List<Integer> parseQuery(String[] args) {
+	public static String parseQuery(String[] args) {
 		List<Integer> result = new ArrayList<>();
 		if (args.length == 2) {
 			if (args[0].equals("!")) {
@@ -85,8 +89,8 @@ public class QueryHandler {
 				result = union(args[0], args[2]);
 			}
 		}
-		System.out.println(result);
-		return null;
+		cache.put("$$" + nodeLevel++ + "$$", (ArrayList<Integer>) result);
+		return "$$" + nodeLevel + "$$";
 	}
 
 	public static List<Integer> intersect(String term1, String term2) {
@@ -107,8 +111,8 @@ public class QueryHandler {
 			e.printStackTrace();
 		}
 		HashMap<String, List<Integer>> map = index.getMap();
-		List<Integer> list1 = map.get(term1);
-		List<Integer> list2 = map.get(term2);
+		List<Integer> list1 = term1.startsWith("$$") ? cache.get(term1) : map.get(term1);
+		List<Integer> list2 = term2.startsWith("$$") ? cache.get(term2) : map.get(term2);
 		List<Integer> intersection = new ArrayList<Integer>();
 		int length1 = list1.size();
 		int length2 = list2.size();

@@ -38,7 +38,7 @@ public class InvertedIndex {
     }              
     
     private void constructDictionary(TreeMap dict) {
-        File folder = new File("../../preprocessing/data/");
+        File folder = new File("C:\\Users\\kanis\\Documents\\GitHub\\InformationRetrieval\\InvertedIndex\\preprocessing\\data");
         File[] listOfFiles = folder.listFiles();
 
         for (int i = 0; i < listOfFiles.length; ++i) {
@@ -47,11 +47,11 @@ public class InvertedIndex {
                 docs.put(file.getName(), i++);
                 // tokenize and add to dict
                 try {
-                    String content = new String(Files.readAllBytes(Paths.get("../../preprocessing/data/" + file.getName())));
+                    String content = new String(Files.readAllBytes(Paths.get("C:\\Users\\kanis\\Documents\\GitHub\\InformationRetrieval\\InvertedIndex\\preprocessing\\data\\" + file.getName())));
                     StringTokenizer st = new StringTokenizer(content);
                     tokenArray.add(st);
                 } catch (IOException e) {
-                    System.out.println("Sorry, an error occurred.");
+                    System.out.println(e.getMessage());
                 }
             }
         }
@@ -72,11 +72,15 @@ public class InvertedIndex {
         // TODO: MOVE BELOW OP TO PAGED MECHANISM (WHAT IF SIZE OF INDEX > RAM?)
         // index built in memory, save to .json file
         String indexJson = new Gson().toJson(dictionary).toString();
-        File indexFile = new File("../index.json");
+        String docsJson = new Gson().toJson(docs).toString();
+        File indexFile = new File("C:\\Users\\kanis\\Documents\\GitHub\\InformationRetrieval\\InvertedIndex\\index.json");
+        File docsFile = new File("C:\\Users\\kanis\\Documents\\GitHub\\InformationRetrieval\\InvertedIndex\\docs.json");
         BufferedWriter bufferedWriter = null;
         try {
             bufferedWriter = new BufferedWriter(new FileWriter(indexFile));
             bufferedWriter.write(indexJson);
+            bufferedWriter = new BufferedWriter(new FileWriter(docsFile));
+            bufferedWriter.write(docsJson);
             bufferedWriter.close();
         } catch (IOException e) {
             e.printStackTrace();
